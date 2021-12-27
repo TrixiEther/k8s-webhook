@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webhook-deployment
+  namespace: default
+  labels:
+    app: webhook
+  annotations:
+    sidecar.istio.io/inject: "false"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webhook
+  template:
+    metadata:
+      labels:
+        app: webhook
+      annotations:
+        sidecar.istio.io/inject: "false"
+    spec:
+      containers:
+        - name: webhook
+          image: k8s-webhook:v1
+          imagePullPolicy: IfNotPresent
+          volumeMounts:
+          - name: webhook-certs
+            mountPath: /certs
+            readOnly: true
+          - name: webhook-config
+            mountPath: /configs/inject
+          - name: webhook-core-config
+            mountPath: /configs/core
+      volumes:
+      - name: webhook-certs
+        secret:
+          secretName: webhook-certs
+      - name: webhook-config
+        configMap:
+          name: k8s-webhook-configmap
+      - name: webhook-core-config
+        configMap:
+          name: k8s-webhook-coreconfig
